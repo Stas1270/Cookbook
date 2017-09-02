@@ -82,12 +82,12 @@ public abstract class BaseFragment extends Fragment {
         }
     }
 
-    public void showWaitingDialog() {
-        BaseActivity bActivity = getBaseActivity();
-        if (bActivity != null) {
-            bActivity.showWaitingDialog();
-        }
-    }
+//    public void showWaitingDialog() {
+//        BaseActivity bActivity = getBaseActivity();
+//        if (bActivity != null) {
+//            bActivity.showWaitingDialog();
+//        }
+//    }
 
     public void dismissWaitingDialog() {
         BaseActivity bActivity = getBaseActivity();

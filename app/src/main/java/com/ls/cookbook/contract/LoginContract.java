@@ -1,6 +1,7 @@
 package com.ls.cookbook.contract;
 
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 
 import com.facebook.CallbackManager;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -19,9 +20,8 @@ public interface LoginContract {
 
         void onLoginSuccessful(FirebaseUser currentUser);
 
-        void onLoginSuccessful(GoogleSignInAccount acct);
 
-        void onLoginFailure();
+        void onLoginFailure(String error);
 
         void onLoginCancel();
 
@@ -31,7 +31,7 @@ public interface LoginContract {
 
         void loginEmail(String email, String pwd);
 
-        void loginFB(String email, String pwd);
+        void loginFB(AppCompatActivity appCompatActivity);
 
         GoogleApiClient getGoogleApiClient(FragmentActivity fragmentActivity);
 

@@ -20,6 +20,12 @@
 
     <string name="facebook_app_id">171505636743122</string>
     <string name="fb_login_protocol_scheme">fb171505636743122</string>
+    <string name="drawer_open">Open</string>
+    <string name="drawer_close">Close</string>
+    <string name="search">Search</string>
+    <string name="are_you_sure_to_log_out">Are you sure to log out?</string>
+    <string name="logout">Logout</string>
+    <string name="cancel">Cancel</string>
 
 </resources>
 

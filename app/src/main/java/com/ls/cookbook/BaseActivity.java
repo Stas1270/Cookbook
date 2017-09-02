@@ -101,9 +101,9 @@ public abstract class BaseActivity extends AppCompatActivity {
         showWaitingDialog(waitingMessage, false);
     }
 
-    public void showWaitingDialog() {
-        showWaitingDialog("");
-    }
+//    public void showWaitingDialog() {
+//        showWaitingDialog("");
+//    }
 
     public void dismissWaitingDialog() {
         if (waitingDialog != null && waitingDialog.isShowing()) {
@@ -312,6 +312,24 @@ public abstract class BaseActivity extends AppCompatActivity {
                 .setMessage(message)
                 .setPositiveButton(getString(android.R.string.ok), onClickListener)
                 .setNegativeButton(getString(android.R.string.cancel), null)
+                .create()
+                .show();
+    }
+
+    public void showMessageOK(String message, DialogInterface.OnClickListener onClickListener) {
+        new AlertDialog.Builder(this)
+                .setMessage(message)
+                .setPositiveButton(getString(android.R.string.ok), onClickListener)
+                .create()
+                .show();
+    }
+
+    public void showMessage(String message,String positiveButtonTitle ,String negativeButtonTitle,
+                            DialogInterface.OnClickListener onClickListener) {
+        new AlertDialog.Builder(this)
+                .setMessage(message)
+                .setPositiveButton(positiveButtonTitle, onClickListener)
+                .setNegativeButton(negativeButtonTitle, null)
                 .create()
                 .show();
     }

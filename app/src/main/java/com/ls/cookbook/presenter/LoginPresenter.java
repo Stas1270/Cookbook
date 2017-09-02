@@ -2,6 +2,7 @@ package com.ls.cookbook.presenter;
 
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -22,17 +23,23 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.ls.cookbook.CookBookApp;
+import com.ls.cookbook.R;
 import com.ls.cookbook.contract.LoginContract;
 import com.ls.cookbook.util.Logger;
+import com.ls.cookbook.util.ResourcesUtil;
+
+import java.util.Arrays;
 
 /**
  * Created by LS on 02.09.2017.
  */
 
+@SuppressWarnings("ALL")
 public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.OnConnectionFailedListener {
 
-    LoginContract.View loginView;
+    private LoginContract.View loginView;
 
     private FirebaseAuth mAuth;
 
@@ -44,10 +51,10 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
 
     @Override
     public void start() {
-        getSignedInEmailUser();
+        trySignIn();
     }
 
-    private void getSignedInEmailUser() {
+    private void trySignIn() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
             loginView.onLoginSuccessful(currentUser);
@@ -61,22 +68,20 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            getSignedInEmailUser();
+                            trySignIn();
                         } else {
-                            loginView.onLoginFailure();
+                            if (task.getException() != null) {
+                                loginView.onLoginFailure(task.getException().getLocalizedMessage());
+                            }
                         }
                     }
                 });
     }
 
     @Override
-    public void loginFB(String email, String pwd) {
-
-    }
-
-    @Override
     public GoogleApiClient getGoogleApiClient(FragmentActivity activity) {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(ResourcesUtil.getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         return new GoogleApiClient.Builder(CookBookApp.getContext())
@@ -85,15 +90,33 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
                 .build();
     }
 
+    private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
+        Logger.d("firebaseAuthWithGoogle:" + acct.getId());
+        AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            Logger.d("signInWithCredential:success");
+                            trySignIn();
+                        } else {
+                            if (task.getException() != null) {
+                                loginView.onLoginFailure(task.getException().getLocalizedMessage());
+                            }
+                        }
+                    }
+                });
+    }
+
     @Override
     public void handleSignInResult(GoogleSignInResult result) {
         Logger.d("handleSignInResult:" + result.isSuccess());
         if (result.isSuccess()) {
-            // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
-            loginView.onLoginSuccessful(acct);
+            firebaseAuthWithGoogle(acct);
         } else {
-            loginView.onLoginFailure();
+            loginView.onLoginFailure("Failure");
         }
     }
 
@@ -113,11 +136,18 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
 
             @Override
             public void onError(FacebookException exception) {
-                loginView.onLoginFailure();
+                loginView.onLoginFailure(exception.getLocalizedMessage());
             }
         });
         return callbackManager;
     }
+
+    @Override
+    public void loginFB(AppCompatActivity activity) {
+        LoginManager.getInstance().logInWithReadPermissions(activity, Arrays.asList("public_profile"));
+    }
+
+
 
     private void handleFacebookAccessToken(AccessToken token) {
         Logger.d("handleFacebookAccessToken:" + token);
@@ -129,10 +159,11 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Logger.d("signInWithCredential:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            loginView.onLoginSuccessful(user);
+                            trySignIn();
                         } else {
-                            loginView.onLoginFailure();
+                            if (task.getException() != null) {
+                                loginView.onLoginFailure(task.getException().getLocalizedMessage());
+                            }
                         }
                     }
                 });
@@ -140,6 +171,6 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        loginView.onLoginFailure();
+        loginView.onLoginFailure(connectionResult.getErrorMessage());
     }
 }
