@@ -18,6 +18,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import butterknife.ButterKnife;
+
 /**
  * Created by LS on 02.09.2017.
  */
@@ -29,6 +31,7 @@ public abstract class BaseFragment extends Fragment {
         View view = inflateView(inflater, container);
         if (view != null) {
             findFragmentViews(view, savedInstanceState);
+            ButterKnife.bind(getActivity());
             setDataToFragmentViews();
         }
         return view;

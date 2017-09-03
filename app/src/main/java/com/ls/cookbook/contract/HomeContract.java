@@ -5,12 +5,12 @@ package com.ls.cookbook.contract;
  */
 
 public interface HomeContract {
-    interface Model {
-    }
 
     interface View {
     }
 
     interface Presenter {
+        void start();
+
     }
 }

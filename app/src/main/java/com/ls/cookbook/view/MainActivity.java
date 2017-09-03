@@ -50,7 +50,6 @@ public class MainActivity extends BaseActivity implements OnListItemClickListene
         return intent;
     }
 
-
     @Override
     public int initContentView() {
         return R.layout.activity_main;
