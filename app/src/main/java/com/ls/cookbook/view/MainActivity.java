@@ -16,11 +16,14 @@ import android.view.View;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.ls.cookbook.BaseActivity;
+import com.ls.cookbook.Injection;
 import com.ls.cookbook.R;
 import com.ls.cookbook.adapter.DrawerAdapter;
 import com.ls.cookbook.interfaces.OnListItemClickListener;
+import com.ls.cookbook.presenter.HomePresenter;
 import com.ls.cookbook.util.UserHelper;
 import com.ls.cookbook.view.fragment.HomeFragment;
+import com.ls.cookbook.view.fragment.SettingsFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +32,7 @@ import butterknife.BindView;
 
 import static com.ls.cookbook.adapter.DrawerAdapter.NavigationItems.Home;
 import static com.ls.cookbook.adapter.DrawerAdapter.NavigationItems.Logout;
+import static com.ls.cookbook.adapter.DrawerAdapter.NavigationItems.Settings;
 
 public class MainActivity extends BaseActivity implements OnListItemClickListener<DrawerAdapter.NavigationItems> {
 
@@ -45,6 +49,8 @@ public class MainActivity extends BaseActivity implements OnListItemClickListene
     @BindView(R.id.rv_drawer)
     RecyclerView rvDrawer;
 
+    private HomePresenter homePresenter;
+
     public static Intent getMainActivityInstance(Context context) {
         Intent intent = new Intent(context, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -60,7 +66,7 @@ public class MainActivity extends BaseActivity implements OnListItemClickListene
     public void setDataToActivityViews() {
         initViews();
         initDrawer();
-        onItemClick(0,Home);
+        onItemClick(0, Home);
     }
 
     private void initViews() {
@@ -103,6 +109,7 @@ public class MainActivity extends BaseActivity implements OnListItemClickListene
     private void initDrawer() {
         List<DrawerAdapter.NavigationItems> drawerItems = new ArrayList<>();
         drawerItems.add(Home);
+        drawerItems.add(Settings);
         drawerItems.add(Logout);
         if (rvDrawer != null) {
             rvDrawer.setLayoutManager(new LinearLayoutManager(this));
@@ -134,7 +141,22 @@ public class MainActivity extends BaseActivity implements OnListItemClickListene
         drawerAdapter.setSelected(position);
         switch (object) {
             case Home:
-                changeFragment(R.id.fl_content, HomeFragment.newInstance(), false);
+                HomeFragment homeFragment = HomeFragment.newInstance();
+                homePresenter = new HomePresenter(Injection.provideTasksRepository(getApplicationContext()),
+                        homeFragment,
+                        Injection.provideSchedulerProvider());
+
+                changeFragment(R.id.fl_content, homeFragment, false);
+                drawerLayout.closeDrawers();
+                break;
+
+            case Settings:
+                SettingsFragment settingsFragment = SettingsFragment.newInstance();
+//                homePresenter = new HomePresenter(Injection.provideTasksRepository(getApplicationContext()),
+//                        homeFragment,
+//                        Injection.provideSchedulerProvider());
+//
+                changeFragment(R.id.fl_content, settingsFragment, false);
                 drawerLayout.closeDrawers();
                 break;
 
@@ -151,5 +173,11 @@ public class MainActivity extends BaseActivity implements OnListItemClickListene
                         });
                 break;
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        homePresenter.unsubscribe();
     }
 }

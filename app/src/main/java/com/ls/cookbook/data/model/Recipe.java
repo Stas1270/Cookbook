@@ -6,7 +6,7 @@ package com.ls.cookbook.data.model;
 
 public class Recipe {
 
-    private String id;
+    private long id;
     private String name;
     private String description;
 
@@ -34,17 +34,24 @@ public class Recipe {
         this.description = description;
     }
 
-    public String getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public Recipe(String id, String name, String description) {
+    public Recipe(long id, String name, String description) {
         this.id = id;
         this.name = name;
         this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return "Id = " + id +
+                "; name = " + name +
+                "; descr = " + description;
     }
 }

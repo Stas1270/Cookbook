@@ -20,7 +20,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
+import com.ls.cookbook.CookBookApp;
 import com.ls.cookbook.data.model.Recipe;
+import com.ls.cookbook.util.InternetUtil;
 import com.ls.cookbook.util.Logger;
 
 import java.util.LinkedHashMap;
@@ -50,7 +52,7 @@ public class Repository implements DataSource {
      */
     @VisibleForTesting
     @Nullable
-    Map<String, Recipe> mCachedTasks;
+    Map<Long, Recipe> mCachedTasks;
 
     /**
      * Marks the cache as invalid, to force an update the next time data is requested. This variable
@@ -105,14 +107,20 @@ public class Repository implements DataSource {
 
         Observable<List<Recipe>> remoteTasks = getAndSaveRemoteTasks();
 
-        if (mCacheIsDirty) {
-            return remoteTasks;
+        boolean connected = InternetUtil.isConnected(CookBookApp.getContext());
+
+        Observable<List<Recipe>> localTasks = getAndCacheLocalTasks();
+        if (!connected) {
+            return localTasks;
         } else {
-            // Query the local storage if available. If not, query the network.
-            Observable<List<Recipe>> localTasks = getAndCacheLocalTasks();
-            return Observable.concat(localTasks, remoteTasks)
-                    .filter(tasks -> !tasks.isEmpty())
-                    .distinct();
+            if (mCacheIsDirty) {
+                return remoteTasks;
+            } else {
+                // Query the local storage if available. If not, query the network.
+                return Observable.concat(localTasks, remoteTasks)
+                        .filter(tasks -> !tasks.isEmpty())
+                        .distinct();
+            }
         }
     }
 
@@ -137,21 +145,23 @@ public class Repository implements DataSource {
                     }
                 })
                 .doOnComplete(() -> mCacheIsDirty = false)
-                .doOnError(e-> Logger.e("ERROR REMOTE"));
+                .doOnError(e -> Logger.e("ERROR REMOTE"));
     }
 
     @Override
-    public void saveRecipe(@NonNull Recipe recipe) {
+    public Observable<Recipe> saveRecipe(@NonNull Recipe recipe) {
         checkNotNull(recipe);
-        mTasksRemoteDataSource.saveRecipe(recipe);
-        mTasksLocalDataSource.saveRecipe(recipe);
+        Observable<Recipe> observable = mTasksRemoteDataSource.saveRecipe(recipe);
+        Observable<Recipe> saveRecipe = mTasksLocalDataSource.saveRecipe(recipe);
 
         // Do in memory cache update to keep the app UI up to date
         if (mCachedTasks == null) {
             mCachedTasks = new LinkedHashMap<>();
         }
         mCachedTasks.put(recipe.getId(), recipe);
+        return Observable.merge(observable,saveRecipe);
     }
+
 
     /**
      * Gets tasks from local data source (sqlite) unless the table is new or empty. In that case it
@@ -221,7 +231,7 @@ public class Repository implements DataSource {
     Maybe<Recipe> getRecipeWithIdFromLocalRepository(@NonNull final String recipe) {
         return mTasksLocalDataSource
                 .getRecipe(recipe)
-                .doOnSuccess(task -> mCachedTasks.put(recipe, task));
+                .doOnSuccess(task -> mCachedTasks.put(Long.getLong(recipe), task));
     }
 
 }

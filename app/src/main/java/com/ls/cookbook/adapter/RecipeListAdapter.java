@@ -14,6 +14,7 @@ import com.ls.cookbook.R;
 import com.ls.cookbook.adapter.viewholder.AbsViewHolder;
 import com.ls.cookbook.data.model.Recipe;
 import com.ls.cookbook.interfaces.OnListItemClickListener;
+import com.ls.cookbook.util.Logger;
 
 import java.util.List;
 
@@ -40,6 +41,7 @@ public class RecipeListAdapter extends AbsRecyclerAdapter<Recipe, RecipeListAdap
         @Override
         public void onBindView(int position, Recipe object) {
             Recipe recipe = list.get(position);
+            Logger.d("Recipe", recipe.toString());
             final int currentPosition = getAdapterPosition();
             tvTitle.setText(recipe.getName());
 

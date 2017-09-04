@@ -19,10 +19,14 @@ public interface HomeContract {
         void showRecipeList(List<Recipe> recipeList);
 
         void showNoRecipes();
+
+        void setPresenter(Presenter presenter);
     }
 
     interface Presenter extends BasePresenter{
 
         void getRecipeList(boolean forceUpdate);
+
+        void addRecipe(Recipe recipe);
     }
 }

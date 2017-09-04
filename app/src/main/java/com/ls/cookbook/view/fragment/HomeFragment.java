@@ -1,11 +1,13 @@
 package com.ls.cookbook.view.fragment;
 
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.ls.cookbook.BaseFragment;
+import com.ls.cookbook.BasePresenter;
 import com.ls.cookbook.Injection;
 import com.ls.cookbook.R;
 import com.ls.cookbook.adapter.RecipeListAdapter;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
+import butterknife.OnClick;
 
 import static com.facebook.FacebookSdk.getApplicationContext;
 
@@ -29,6 +32,9 @@ public class HomeFragment extends BaseFragment implements OnListItemClickListene
 
     @BindView(R.id.rv_home)
     RecyclerView recyclerView;
+
+    @BindView(R.id.fab_add_recipe)
+    FloatingActionButton fbAddRecipe;
 
     private List<Recipe> recipeList = new ArrayList<>();
     private RecipeListAdapter recipeListAdapter;
@@ -51,10 +57,11 @@ public class HomeFragment extends BaseFragment implements OnListItemClickListene
 
     @Override
     protected void setDataToFragmentViews() {
+//        homePresenter = new HomePresenter(Injection.provideTasksRepository(getApplicationContext()),
+//                this,
+//                Injection.provideSchedulerProvider());
         initAdapter();
-        homePresenter = new HomePresenter(Injection.provideTasksRepository(getApplicationContext()),
-                this,
-                Injection.provideSchedulerProvider());
+//        homePresenter.subscribe();
     }
 
     private void initAdapter() {
@@ -63,18 +70,16 @@ public class HomeFragment extends BaseFragment implements OnListItemClickListene
         recyclerView.setAdapter(recipeListAdapter);
     }
 
-
     @Override
     public void onResume() {
         super.onResume();
-        dismissProgressDialog();
         homePresenter.subscribe();
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-        homePresenter.unsubscribe();
+    public void onDestroy() {
+        super.onDestroy();
+        if (homePresenter != null) homePresenter.unsubscribe();
     }
 
     @Override
@@ -84,9 +89,9 @@ public class HomeFragment extends BaseFragment implements OnListItemClickListene
 
     @Override
     public void setLoadingIndicator(boolean b) {
-        if (b){
+        if (b) {
             showProgressDialog();
-        } else{
+        } else {
             dismissProgressDialog();
         }
     }
@@ -104,8 +109,20 @@ public class HomeFragment extends BaseFragment implements OnListItemClickListene
     }
 
     @Override
+    public void setPresenter(HomeContract.Presenter presenter) {
+        homePresenter = presenter;
+
+    }
+
+    @Override
     public void showRecipeList(List<Recipe> recipeList) {
         dismissProgressDialog();
         recipeListAdapter.setData(recipeList);
+    }
+
+    @OnClick(R.id.fab_add_recipe)
+    void onClickAddRecipe() {
+        long millis = System.currentTimeMillis();
+        homePresenter.addRecipe(new Recipe(millis, "name" + millis, "descr" + millis));
     }
 }

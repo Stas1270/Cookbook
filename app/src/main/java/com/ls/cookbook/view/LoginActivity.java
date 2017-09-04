@@ -2,23 +2,16 @@ package com.ls.cookbook.view;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
 import android.widget.TextView;
 
 import com.facebook.CallbackManager;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GetTokenResult;
 import com.ls.cookbook.BaseActivity;
 import com.ls.cookbook.R;
 import com.ls.cookbook.contract.LoginContract;
 import com.ls.cookbook.presenter.LoginPresenter;
-import com.ls.cookbook.util.Logger;
 
 import butterknife.BindView;
 import butterknife.OnClick;

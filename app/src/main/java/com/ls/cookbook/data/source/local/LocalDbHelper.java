@@ -27,14 +27,16 @@ public class LocalDbHelper extends SQLiteOpenHelper {
 
     private static final String TEXT_TYPE = " TEXT";
 
+    private static final String INTEGER_TYPE = " INTEGER";
+
     private static final String BOOLEAN_TYPE = " INTEGER";
 
     private static final String COMMA_SEP = ",";
 
     private static final String SQL_CREATE_RECIPE_ENTRIES =
             "CREATE TABLE " + LocalPersistenceContract.RecipeEntry.TABLE_NAME + " (" +
-                    LocalPersistenceContract.RecipeEntry._ID + TEXT_TYPE + " PRIMARY KEY," +
-                    LocalPersistenceContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + TEXT_TYPE + COMMA_SEP +
+                    LocalPersistenceContract.RecipeEntry._ID + INTEGER_TYPE + " PRIMARY KEY," +
+//                    LocalPersistenceContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + INTEGER_TYPE + COMMA_SEP +
                     LocalPersistenceContract.RecipeEntry.COLUMN_NAME_TITLE + TEXT_TYPE + COMMA_SEP +
                     LocalPersistenceContract.RecipeEntry.COLUMN_NAME_DESCRIPTION + TEXT_TYPE +
             " )";

@@ -44,6 +44,8 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
     private LoginContract.View loginView;
 
     private FirebaseAuth mAuth;
+    private GoogleSignInOptions gso;
+    private GoogleApiClient googleApiClient;
 
     public LoginPresenter(LoginContract.View view) {
         this.loginView = view;
@@ -65,7 +67,7 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
                             UserHelper.getInstance().setToken(token);
                             loginView.onLoginSuccessful();
                         })
-                .addOnFailureListener(e -> loginView.onLoginFailure(e.getLocalizedMessage()));
+                        .addOnFailureListener(e -> loginView.onLoginFailure(e.getLocalizedMessage()));
             }
         }
     }
@@ -92,14 +94,19 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
 
     @Override
     public GoogleApiClient getGoogleApiClient(FragmentActivity activity) {
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(ResourcesUtil.getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
-        return new GoogleApiClient.Builder(CookBookApp.getContext())
-                .enableAutoManage(activity, this)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-                .build();
+        if (gso == null) {
+            gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(ResourcesUtil.getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build();
+        }
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient.Builder(CookBookApp.getContext())
+                    .enableAutoManage(activity, this)
+                    .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                    .build();
+        }
+        return googleApiClient;
     }
 
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {

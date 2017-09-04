@@ -9,6 +9,7 @@ import com.ls.cookbook.util.schedulers.BaseSchedulerProvider;
 
 import java.util.List;
 
+import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.disposables.ListCompositeDisposable;
 
@@ -37,12 +38,19 @@ public class HomePresenter implements HomeContract.Presenter {
         this.homeView = homeView;
         this.baseSchedulerProvider = baseSchedulerProvider;
         disposableContainer = new ListCompositeDisposable();
+        homeView.setPresenter(this);
     }
 
     @Override
     public void getRecipeList(boolean forceUpdate) {
         loadRecipeList(forceUpdate || mFirstLoad, true);
         mFirstLoad = false;
+    }
+
+    @Override
+    public void addRecipe(Recipe recipe) {
+        repository.saveRecipe(recipe)
+                .subscribe(next -> getRecipeList(false));
     }
 
     private void loadRecipeList(final boolean forceUpdate, final boolean showLoadingUI) {
@@ -56,7 +64,6 @@ public class HomePresenter implements HomeContract.Presenter {
                 .getRecipeList()
                 .subscribeOn(baseSchedulerProvider.computation())
                 .observeOn(baseSchedulerProvider.ui())
-                .doOnError(e -> homeView.showLoadingError())
                 .subscribe(
                         // onNext
                         this::processTasks,
@@ -78,7 +85,7 @@ public class HomePresenter implements HomeContract.Presenter {
 
     @Override
     public void subscribe() {
-        getRecipeList(true);
+        getRecipeList(false);
     }
 
     @Override

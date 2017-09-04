@@ -25,6 +25,7 @@ public class DrawerAdapter extends AbsRecyclerAdapter<DrawerAdapter.NavigationIt
 
     public enum NavigationItems {
         Home("Home"),
+        Settings("Settings"),
         Logout("Logout");
 
         private String itemName;

@@ -32,6 +32,7 @@
     <string name="are_you_sure_to_log_out">Are you sure to log out?</string>
     <string name="logout">Logout</string>
     <string name="cancel">Cancel</string>
+    <!--<string name="default_web_client_id">758527634782-0e96vbgg6si46ikbe5t2lt9ppe38ir2a.apps.googleusercontent.com</string>-->
 
 </resources>
 

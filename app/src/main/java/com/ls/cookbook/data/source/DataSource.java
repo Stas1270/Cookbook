@@ -36,7 +36,7 @@ public interface DataSource {
 
     Maybe<Recipe> getRecipe(@NonNull String recipeId);
 
-    void saveRecipe(@NonNull Recipe recipe);
+    Observable<Recipe> saveRecipe(@NonNull Recipe recipe);
 
     void deleteRecipe(@NonNull String id);
 

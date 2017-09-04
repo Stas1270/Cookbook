@@ -53,11 +53,17 @@ public class RemoteDataSource implements DataSource {
         mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
+    //    @Override
+    public Observable<Boolean> isAvailableConnect() {
+        return RxFirebaseDatabase
+                .observeSingleValueEvent(FirebaseDatabase.getInstance().getReference(".info/connected"), Boolean.class)
+                .toObservable();
+    }
+
     @Override
     public Observable<List<Recipe>> getRecipeList() {
         return RxFirebaseDatabase
                 .observeSingleValueEvent(getRecipeRef().orderByValue(), DataSnapshotMapper.listOf(Recipe.class))
-                .doOnError(e -> Logger.e("error!!!"))
                 .toObservable();
     }
 
@@ -74,7 +80,8 @@ public class RemoteDataSource implements DataSource {
     }
 
     @Override
-    public void saveRecipe(@NonNull Recipe task) {
+    public Observable<Recipe> saveRecipe(@NonNull Recipe recipe) {
+        return RxFirebaseDatabase.setValue(getRecipeRef().child(String.valueOf(recipe.getId())), recipe).toObservable();
     }
 
     @Override
