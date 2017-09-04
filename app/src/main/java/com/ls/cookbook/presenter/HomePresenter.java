@@ -9,9 +9,8 @@ import com.ls.cookbook.util.schedulers.BaseSchedulerProvider;
 
 import java.util.List;
 
-import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Action;
+import io.reactivex.internal.disposables.ListCompositeDisposable;
 
 
 /**
@@ -28,8 +27,8 @@ public class HomePresenter implements HomeContract.Presenter {
     @NonNull
     private HomeContract.View homeView;
 
-//    @NonNull
-//    private Disposable mSubscription;
+    @NonNull
+    private ListCompositeDisposable disposableContainer;
 
     private boolean mFirstLoad = true;
 
@@ -37,6 +36,7 @@ public class HomePresenter implements HomeContract.Presenter {
         this.repository = repository;
         this.homeView = homeView;
         this.baseSchedulerProvider = baseSchedulerProvider;
+        disposableContainer = new ListCompositeDisposable();
     }
 
     @Override
@@ -52,11 +52,11 @@ public class HomePresenter implements HomeContract.Presenter {
         if (forceUpdate) {
             repository.refreshRecipeList();
         }
-        /*Observable subscription = */repository
+        Disposable disposable = repository
                 .getRecipeList()
                 .subscribeOn(baseSchedulerProvider.computation())
                 .observeOn(baseSchedulerProvider.ui())
-                .doOnError(e-> homeView.showLoadingError())
+                .doOnError(e -> homeView.showLoadingError())
                 .subscribe(
                         // onNext
                         this::processTasks,
@@ -64,7 +64,7 @@ public class HomePresenter implements HomeContract.Presenter {
                         throwable -> homeView.showLoadingError(),
                         // onCompleted
                         () -> homeView.setLoadingIndicator(false));
-//        mSubscription = subscription;
+        disposableContainer.add(disposable);
     }
 
     private void processTasks(@NonNull List<Recipe> recipeList) {
@@ -83,6 +83,6 @@ public class HomePresenter implements HomeContract.Presenter {
 
     @Override
     public void unsubscribe() {
-//        mSubscription.dispose();
+        disposableContainer.dispose();
     }
 }

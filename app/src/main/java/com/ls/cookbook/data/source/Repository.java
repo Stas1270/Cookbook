@@ -28,25 +28,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
-import io.reactivex.Single;
-import io.reactivex.functions.Action;
-import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 
-
-/**
- * Concrete implementation to load tasks from the data sources into a cache.
- * <p/>
- * For simplicity, this implements a dumb synchronisation between locally persisted data and data
- * obtained from the server, by using the remote data source only if the local database doesn't
- * exist or is empty.
- */
 public class Repository implements DataSource {
 
     @Nullable
@@ -231,10 +218,10 @@ public class Repository implements DataSource {
     }
 
     @NonNull
-    Maybe<Recipe> getRecipeWithIdFromLocalRepository(@NonNull final String taskId) {
+    Maybe<Recipe> getRecipeWithIdFromLocalRepository(@NonNull final String recipe) {
         return mTasksLocalDataSource
-                .getRecipe(taskId)
-                .doOnSuccess(task -> mCachedTasks.put(taskId, task));
+                .getRecipe(recipe)
+                .doOnSuccess(task -> mCachedTasks.put(recipe, task));
     }
 
 }

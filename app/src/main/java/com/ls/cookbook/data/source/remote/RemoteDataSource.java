@@ -56,8 +56,8 @@ public class RemoteDataSource implements DataSource {
     @Override
     public Observable<List<Recipe>> getRecipeList() {
         return RxFirebaseDatabase
-                .observeSingleValueEvent(getRecipeRef(), DataSnapshotMapper.listOf(Recipe.class))
-                .doOnError(e-> Logger.e("error!!!"))
+                .observeSingleValueEvent(getRecipeRef().orderByValue(), DataSnapshotMapper.listOf(Recipe.class))
+                .doOnError(e -> Logger.e("error!!!"))
                 .toObservable();
     }
 
@@ -67,11 +67,10 @@ public class RemoteDataSource implements DataSource {
 
     @Override
     public Maybe<Recipe> getRecipe(@NonNull String taskId) {
-        //// FIXME: 04.09.2017 implement rx
-        return null;
-//        return RxFirebaseDatabase
-//                .observeSingleValueEvent(getRecipeRef(), DataSnapshotMapper.listOf(Recipe.class))
-//                .toObservable();
+        return RxFirebaseDatabase
+                .observeSingleValueEvent(getRecipeRef().child("name").equalTo("test"), Recipe.class);
+//                .toObservable()
+//                .firstElement();
     }
 
     @Override
