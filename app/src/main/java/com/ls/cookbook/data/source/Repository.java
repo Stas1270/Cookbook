@@ -20,16 +20,22 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
-import com.ls.cookbook.data.Task;
+import com.ls.cookbook.data.model.Recipe;
+import com.ls.cookbook.util.Logger;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import rx.Observable;
-import rx.functions.Func1;
+
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.Single;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 
@@ -57,7 +63,7 @@ public class Repository implements DataSource {
      */
     @VisibleForTesting
     @Nullable
-    Map<String, Task> mCachedTasks;
+    Map<String, Recipe> mCachedTasks;
 
     /**
      * Marks the cache as invalid, to force an update the next time data is requested. This variable
@@ -100,132 +106,64 @@ public class Repository implements DataSource {
      * Gets tasks from cache, local data source (SQLite) or remote data source, whichever is
      * available first.
      */
+
     @Override
-    public Observable<List<Task>> getTasks() {
+    public Observable<List<Recipe>> getRecipeList() {
         // Respond immediately with cache if available and not dirty
         if (mCachedTasks != null && !mCacheIsDirty) {
-            return Observable.from(mCachedTasks.values()).toList();
+            return Observable.fromIterable(mCachedTasks.values()).toList().toObservable();
         } else if (mCachedTasks == null) {
             mCachedTasks = new LinkedHashMap<>();
         }
 
-        Observable<List<Task>> remoteTasks = getAndSaveRemoteTasks();
+        Observable<List<Recipe>> remoteTasks = getAndSaveRemoteTasks();
 
         if (mCacheIsDirty) {
             return remoteTasks;
         } else {
             // Query the local storage if available. If not, query the network.
-            Observable<List<Task>> localTasks = getAndCacheLocalTasks();
+            Observable<List<Recipe>> localTasks = getAndCacheLocalTasks();
             return Observable.concat(localTasks, remoteTasks)
                     .filter(tasks -> !tasks.isEmpty())
-                    .first();
+                    .distinct();
         }
     }
 
-    private Observable<List<Task>> getAndCacheLocalTasks() {
-        return mTasksLocalDataSource.getTasks()
-                .flatMap(new Func1<List<Task>, Observable<List<Task>>>() {
-                    @Override
-                    public Observable<List<Task>> call(List<Task> tasks) {
-                        return Observable.from(tasks)
-                                .doOnNext(task -> mCachedTasks.put(task.getId(), task))
-                                .toList();
-                    }
-                });
+    private Observable<List<Recipe>> getAndCacheLocalTasks() {
+        return mTasksLocalDataSource.getRecipeList()
+                .flatMap(recipes -> Observable.fromIterable(recipes)
+                        .doOnNext(recipe -> mCachedTasks.put(recipe.getId(), recipe))
+                        .toList()
+                        .toObservable());
     }
 
-    private Observable<List<Task>> getAndSaveRemoteTasks() {
+    private Observable<List<Recipe>> getAndSaveRemoteTasks() {
         return mTasksRemoteDataSource
-                .getTasks()
-                .flatMap(new Func1<List<Task>, Observable<List<Task>>>() {
+                .getRecipeList()
+                .flatMap(new Function<List<Recipe>, Observable<List<Recipe>>>() {
                     @Override
-                    public Observable<List<Task>> call(List<Task> tasks) {
-                        return Observable.from(tasks).doOnNext(task -> {
-                            mTasksLocalDataSource.saveTask(task);
+                    public Observable<List<Recipe>> apply(@io.reactivex.annotations.NonNull List<Recipe> recipes) throws Exception {
+                        return Observable.fromIterable(recipes).doOnNext(task -> {
+                            mTasksLocalDataSource.saveRecipe(task);
                             mCachedTasks.put(task.getId(), task);
-                        }).toList();
+                        }).toList().toObservable();
                     }
                 })
-                .doOnCompleted(() -> mCacheIsDirty = false);
+                .doOnComplete(() -> mCacheIsDirty = false)
+                .doOnError(e-> Logger.e("ERROR REMOTE"));
     }
 
     @Override
-    public void saveTask(@NonNull Task task) {
-        checkNotNull(task);
-        mTasksRemoteDataSource.saveTask(task);
-        mTasksLocalDataSource.saveTask(task);
+    public void saveRecipe(@NonNull Recipe recipe) {
+        checkNotNull(recipe);
+        mTasksRemoteDataSource.saveRecipe(recipe);
+        mTasksLocalDataSource.saveRecipe(recipe);
 
         // Do in memory cache update to keep the app UI up to date
         if (mCachedTasks == null) {
             mCachedTasks = new LinkedHashMap<>();
         }
-        mCachedTasks.put(task.getId(), task);
-    }
-
-    @Override
-    public void completeTask(@NonNull Task task) {
-        checkNotNull(task);
-        mTasksRemoteDataSource.completeTask(task);
-        mTasksLocalDataSource.completeTask(task);
-
-        Task completedTask = new Task(task.getTitle(), task.getDescription(), task.getId(), true);
-
-        // Do in memory cache update to keep the app UI up to date
-        if (mCachedTasks == null) {
-            mCachedTasks = new LinkedHashMap<>();
-        }
-        mCachedTasks.put(task.getId(), completedTask);
-    }
-
-    @Override
-    public void completeTask(@NonNull String taskId) {
-        checkNotNull(taskId);
-        Task taskWithId = getTaskWithId(taskId);
-        if (taskWithId != null) {
-            completeTask(taskWithId);
-        }
-    }
-
-    @Override
-    public void activateTask(@NonNull Task task) {
-        checkNotNull(task);
-        mTasksRemoteDataSource.activateTask(task);
-        mTasksLocalDataSource.activateTask(task);
-
-        Task activeTask = new Task(task.getTitle(), task.getDescription(), task.getId());
-
-        // Do in memory cache update to keep the app UI up to date
-        if (mCachedTasks == null) {
-            mCachedTasks = new LinkedHashMap<>();
-        }
-        mCachedTasks.put(task.getId(), activeTask);
-    }
-
-    @Override
-    public void activateTask(@NonNull String taskId) {
-        checkNotNull(taskId);
-        Task taskWithId = getTaskWithId(taskId);
-        if (taskWithId != null) {
-            activateTask(taskWithId);
-        }
-    }
-
-    @Override
-    public void clearCompletedTasks() {
-        mTasksRemoteDataSource.clearCompletedTasks();
-        mTasksLocalDataSource.clearCompletedTasks();
-
-        // Do in memory cache update to keep the app UI up to date
-        if (mCachedTasks == null) {
-            mCachedTasks = new LinkedHashMap<>();
-        }
-        Iterator<Map.Entry<String, Task>> it = mCachedTasks.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String, Task> entry = it.next();
-            if (entry.getValue().isCompleted()) {
-                it.remove();
-            }
-        }
+        mCachedTasks.put(recipe.getId(), recipe);
     }
 
     /**
@@ -233,14 +171,14 @@ public class Repository implements DataSource {
      * uses the network data source. This is done to simplify the sample.
      */
     @Override
-    public Observable<Task> getTask(@NonNull final String taskId) {
-        checkNotNull(taskId);
+    public Maybe<Recipe> getRecipe(@NonNull final String recipeId) {
+        checkNotNull(recipeId);
 
-        final Task cachedTask = getTaskWithId(taskId);
+        final Recipe cachedTask = getRecipeWithId(recipeId);
 
         // Respond immediately with cache if available
         if (cachedTask != null) {
-            return Observable.just(cachedTask);
+            return Maybe.just(cachedTask);
         }
 
         // Load from server/persisted if needed.
@@ -251,49 +189,39 @@ public class Repository implements DataSource {
         }
 
         // Is the task in the local data source? If not, query the network.
-        Observable<Task> localTask = getTaskWithIdFromLocalRepository(taskId);
-        Observable<Task> remoteTask = mTasksRemoteDataSource
-                .getTask(taskId)
-                .doOnNext(task -> {
-                    mTasksLocalDataSource.saveTask(task);
-                    mCachedTasks.put(task.getId(), task);
+        Maybe<Recipe> localRecipe = getRecipeWithIdFromLocalRepository(recipeId);
+        Maybe<Recipe> remoteRecipe = mTasksRemoteDataSource
+                .getRecipe(recipeId)
+                .doOnSuccess(recipe -> {
+                    mTasksLocalDataSource.saveRecipe(recipe);
+                    mCachedTasks.put(recipe.getId(), recipe);
                 });
 
-        return Observable.concat(localTask, remoteTask).first()
+        return Maybe.concat(localRecipe, remoteRecipe)
+                .firstElement()
                 .map(task -> {
                     if (task == null) {
-                        throw new NoSuchElementException("No task found with taskId " + taskId);
+                        throw new NoSuchElementException("No recipe found with recipeId " + recipeId);
                     }
                     return task;
                 });
     }
 
     @Override
-    public void refreshTasks() {
+    public void refreshRecipeList() {
         mCacheIsDirty = true;
     }
 
     @Override
-    public void deleteAllTasks() {
-        mTasksRemoteDataSource.deleteAllTasks();
-        mTasksLocalDataSource.deleteAllTasks();
+    public void deleteRecipe(@NonNull String recipeId) {
+        mTasksRemoteDataSource.deleteRecipe(checkNotNull(recipeId));
+        mTasksLocalDataSource.deleteRecipe(checkNotNull(recipeId));
 
-        if (mCachedTasks == null) {
-            mCachedTasks = new LinkedHashMap<>();
-        }
-        mCachedTasks.clear();
-    }
-
-    @Override
-    public void deleteTask(@NonNull String taskId) {
-        mTasksRemoteDataSource.deleteTask(checkNotNull(taskId));
-        mTasksLocalDataSource.deleteTask(checkNotNull(taskId));
-
-        mCachedTasks.remove(taskId);
+        mCachedTasks.remove(recipeId);
     }
 
     @Nullable
-    private Task getTaskWithId(@NonNull String id) {
+    private Recipe getRecipeWithId(@NonNull String id) {
         checkNotNull(id);
         if (mCachedTasks == null || mCachedTasks.isEmpty()) {
             return null;
@@ -303,10 +231,10 @@ public class Repository implements DataSource {
     }
 
     @NonNull
-    Observable<Task> getTaskWithIdFromLocalRepository(@NonNull final String taskId) {
+    Maybe<Recipe> getRecipeWithIdFromLocalRepository(@NonNull final String taskId) {
         return mTasksLocalDataSource
-                .getTask(taskId)
-                .doOnNext(task -> mCachedTasks.put(taskId, task))
-                .first();
+                .getRecipe(taskId)
+                .doOnSuccess(task -> mCachedTasks.put(taskId, task));
     }
+
 }

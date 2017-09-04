@@ -6,5 +6,8 @@ package com.ls.cookbook;
 
 public interface BasePresenter {
 
-    void start();
+    void subscribe();
+
+    void unsubscribe();
+
 }

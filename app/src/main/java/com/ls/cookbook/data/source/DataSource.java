@@ -19,11 +19,14 @@ package com.ls.cookbook.data.source;
 import android.support.annotation.NonNull;
 
 
-import com.ls.cookbook.data.Task;
+import com.ls.cookbook.data.model.Recipe;
 
 import java.util.List;
 
-import rx.Observable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+
 
 /**
  * Main entry point for accessing tasks data.
@@ -31,25 +34,14 @@ import rx.Observable;
  */
 public interface DataSource {
 
-    Observable<List<Task>> getTasks();
+    Maybe<Recipe> getRecipe(@NonNull String recipeId);
 
-    Observable<Task> getTask(@NonNull String taskId);
+    void saveRecipe(@NonNull Recipe recipe);
 
-    void saveTask(@NonNull Task task);
+    void deleteRecipe(@NonNull String id);
 
-    void completeTask(@NonNull Task task);
+    void refreshRecipeList();
 
-    void completeTask(@NonNull String taskId);
+    Observable<List<Recipe>> getRecipeList();
 
-    void activateTask(@NonNull Task task);
-
-    void activateTask(@NonNull String taskId);
-
-    void clearCompletedTasks();
-
-    void refreshTasks();
-
-    void deleteAllTasks();
-
-    void deleteTask(@NonNull String taskId);
 }

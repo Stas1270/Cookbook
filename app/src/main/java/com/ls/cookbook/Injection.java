@@ -9,7 +9,6 @@ import com.ls.cookbook.data.source.remote.RemoteDataSource;
 import com.ls.cookbook.util.schedulers.BaseSchedulerProvider;
 import com.ls.cookbook.util.schedulers.SchedulerProvider;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Created by LS on 03.09.2017.
@@ -17,9 +16,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Injection {
 
-
     public static Repository provideTasksRepository(@NonNull Context context) {
-        checkNotNull(context);
         return Repository.getInstance(RemoteDataSource.getInstance(),
                 LocalDataSource.getInstance(context, provideSchedulerProvider()));
     }

@@ -31,7 +31,7 @@ public abstract class BaseFragment extends Fragment {
         View view = inflateView(inflater, container);
         if (view != null) {
             findFragmentViews(view, savedInstanceState);
-            ButterKnife.bind(getActivity());
+            ButterKnife.bind(this, view);
             setDataToFragmentViews();
         }
         return view;
@@ -85,6 +85,20 @@ public abstract class BaseFragment extends Fragment {
         }
     }
 
+    public void showProgressDialog() {
+        BaseActivity bActivity = getBaseActivity();
+        if (bActivity != null) {
+            bActivity.showProgressDialog();
+        }
+    }
+
+    public void dismissProgressDialog() {
+        BaseActivity bActivity = getBaseActivity();
+        if (bActivity != null) {
+            bActivity.dismissProgressDialog();
+        }
+    }
+
 //    public void showWaitingDialog() {
 //        BaseActivity bActivity = getBaseActivity();
 //        if (bActivity != null) {
@@ -96,6 +110,28 @@ public abstract class BaseFragment extends Fragment {
         BaseActivity bActivity = getBaseActivity();
         if (bActivity != null) {
             bActivity.dismissWaitingDialog();
+        }
+    }
+
+
+    public void showMessageOK(String message, DialogInterface.OnClickListener onClickListener) {
+        BaseActivity bActivity = getBaseActivity();
+        if (bActivity != null) {
+            bActivity.showMessageOK(message, onClickListener);
+        }
+    }
+
+    public void showMessageOKCancel(String message, DialogInterface.OnClickListener onClickListener) {
+        BaseActivity bActivity = getBaseActivity();
+        if (bActivity != null) {
+            bActivity.showMessageOKCancel(message, onClickListener);
+        }
+    }
+
+    public void showMessage(String message, String btnPositiveTitle, String btnNegativeTitle, DialogInterface.OnClickListener onClickListener) {
+        BaseActivity bActivity = getBaseActivity();
+        if (bActivity != null) {
+            bActivity.showMessage(message, btnPositiveTitle, btnNegativeTitle, onClickListener);
         }
     }
 

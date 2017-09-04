@@ -3,6 +3,7 @@ package com.ls.cookbook.presenter;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -24,83 +25,69 @@ import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
-import com.kelvinapps.rxfirebase.RxFirebaseAuth;
-import com.kelvinapps.rxfirebase.RxFirebaseUser;
 import com.ls.cookbook.CookBookApp;
 import com.ls.cookbook.R;
 import com.ls.cookbook.contract.LoginContract;
 import com.ls.cookbook.util.Logger;
 import com.ls.cookbook.util.ResourcesUtil;
+import com.ls.cookbook.util.UserHelper;
 
 import java.util.Arrays;
 
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by LS on 02.09.2017.
  */
 
-@SuppressWarnings("ALL")
 public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.OnConnectionFailedListener {
 
     private LoginContract.View loginView;
 
     private FirebaseAuth mAuth;
 
-
     public LoginPresenter(LoginContract.View view) {
         this.loginView = view;
         mAuth = FirebaseAuth.getInstance();
-
     }
 
-    @Override
-    public void start() {
-        trySignIn();
-    }
-
-    private void trySignIn() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            loginView.onLoginSuccessful(currentUser);
+    private void trySignIn(boolean withUpdateToken) {
+        String prefToken = UserHelper.getInstance().getToken();
+        Logger.e("FB TOKEN: " + prefToken);
+        if (!withUpdateToken && !TextUtils.isEmpty(prefToken)) {
+            loginView.onLoginSuccessful();
+        } else {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser != null) {
+                currentUser.getToken(true)
+                        .addOnCompleteListener(task -> {
+                            String token = task.getResult().getToken();
+                            Logger.e("FB TOKEN: " + token);
+                            UserHelper.getInstance().setToken(token);
+                            loginView.onLoginSuccessful();
+                        })
+                .addOnFailureListener(e -> loginView.onLoginFailure(e.getLocalizedMessage()));
+            }
         }
     }
 
     @Override
     public void loginEmail(String email, String password) {
-        RxFirebaseAuth.signInWithEmailAndPassword(mAuth,email,password)
-                .subscribe(token -> {
-                    trySignIn();
-                }, throwable -> {
-                    loginView.onLoginFailure(throwable.getLocalizedMessage());
-                });
-
-//
-//        mAuth.signInWithEmailAndPassword(email, password)
-//                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-//                    @Override
-//                    public void onComplete(@NonNull Task<AuthResult> task) {
-//                        if (task.isSuccessful()) {
-//                            trySignIn();
-//                        } else {
-//                            if (task.getException() != null) {
-//                                loginView.onLoginFailure(task.getException().getLocalizedMessage());
-//                            }
-//                        }
-//                    }
+//        RxFirebaseAuth.signInWithEmailAndPassword(mAuth,email,password)
+//                .subscribe(token -> {
+//                    trySignIn();
+//                }, throwable -> {
+//                    loginView.onLoginFailure(throwable.getLocalizedMessage());
 //                });
-    }
-
-    private void onComplete(Task <AuthResult> task) {
-        if (task.isSuccessful()) {
-            trySignIn();
-        } else {
-            if (task.getException() != null) {
-                loginView.onLoginFailure(task.getException().getLocalizedMessage());
-            }
-        }
-
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        trySignIn(true);
+                    } else {
+                        if (task.getException() != null) {
+                            loginView.onLoginFailure(task.getException().getLocalizedMessage());
+                        }
+                    }
+                });
     }
 
     @Override
@@ -118,26 +105,26 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         Logger.d("firebaseAuthWithGoogle:" + acct.getId());
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
-        RxFirebaseAuth.signInWithCredential(mAuth,credential)
-                .subscribe(token -> {
-                    trySignIn();
-                }, throwable -> {
-                    loginView.onLoginFailure(throwable.getLocalizedMessage());
-                });
-//
-//                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-//                    @Override
-//                    public void onComplete(@NonNull Task<AuthResult> task) {
-//                        if (task.isSuccessful()) {
-//                            Logger.d("signInWithCredential:success");
-//                            trySignIn();
-//                        } else {
-//                            if (task.getException() != null) {
-//                                loginView.onLoginFailure(task.getException().getLocalizedMessage());
-//                            }
-//                        }
-//                    }
+//        RxFirebaseAuth.signInWithCredential(mAuth,credential)
+//                .subscribe(token -> {
+//                    trySignIn();
+//                }, throwable -> {
+//                    loginView.onLoginFailure(throwable.getLocalizedMessage());
 //                });
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            Logger.d("signInWithCredential:success");
+                            trySignIn(true);
+                        } else {
+                            if (task.getException() != null) {
+                                loginView.onLoginFailure(task.getException().getLocalizedMessage());
+                            }
+                        }
+                    }
+                });
     }
 
     @Override
@@ -189,7 +176,7 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Logger.d("signInWithCredential:success");
-                            trySignIn();
+                            trySignIn(true);
                         } else {
                             if (task.getException() != null) {
                                 loginView.onLoginFailure(task.getException().getLocalizedMessage());
@@ -202,5 +189,14 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         loginView.onLoginFailure(connectionResult.getErrorMessage());
+    }
+
+    @Override
+    public void subscribe() {
+        trySignIn(false);
+    }
+
+    @Override
+    public void unsubscribe() {
     }
 }

@@ -18,7 +18,7 @@ public interface LoginContract {
 
     interface View {
 
-        void onLoginSuccessful(FirebaseUser currentUser);
+        void onLoginSuccessful();
 
 
         void onLoginFailure(String error);

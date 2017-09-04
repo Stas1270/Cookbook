@@ -1,5 +1,7 @@
 package com.ls.cookbook.network;
 
+import android.text.TextUtils;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.ls.cookbook.util.Logger;
@@ -23,6 +25,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.Buffer;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
@@ -31,10 +34,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RESTClient {
 
-    //FIXME ADD BASE URL
-    private static final String BASE_URL = "";//SettingsProvider.provideDataBaseSettingsRepository().getDBBaseUrl();
+    private static final String BASE_URL = "https://cookbook1270.firebaseio.com/";
 
     private static RESTClient ourInstance = new RESTClient();
+    private final Retrofit retrofit;
 
     public static RESTClient getInstance() {
         return ourInstance;
@@ -43,7 +46,6 @@ public class RESTClient {
     private RESTClient() {
         Gson gson = new GsonBuilder()
                 .create();
-        GsonConverterFactory gsonConverterFactory = GsonConverterFactory.create(gson);
 
 //        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
 //        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
@@ -60,9 +62,10 @@ public class RESTClient {
                 .connectTimeout(1, TimeUnit.MINUTES)
                 .build();
 
-        Retrofit retrofit = new Retrofit.Builder()
+        retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
-                .addConverterFactory(gsonConverterFactory)
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .client(client)
                 .build();
     }
@@ -114,7 +117,7 @@ public class RESTClient {
         @Override
         public okhttp3.Response intercept(Chain chain) throws IOException {
             Request request = chain.request();
-            Logger.e("BaseRESTClient", "url: " + request.url() + " access-token: " + request.header("access-token") + " body: " + bodyToString(request));
+            Logger.e("BaseRESTClient", "url: " + request.url() + " " + request.method() + " auth: " + !TextUtils.isEmpty(request.header("auth")) + " body: " + bodyToString(request));
             okhttp3.Response response = chain.proceed(request);
             String bodyString = response.body().string();
             Logger.e("BaseRESTClient", "url: " + request.url() + " code: " + String.valueOf(response.code()) + "; response: " + bodyString);
@@ -137,10 +140,10 @@ public class RESTClient {
             }
         }
     }
-//
-//    public AuthorizationService getAuthorizationService() {
-//        return retrofit.create(AuthorizationService.class);
-//    }
+
+    public RecipeService getRecipeService() {
+        return retrofit.create(RecipeService.class);
+    }
 //
 //    public HomeService getHomeService() {
 //        return retrofit.create(HomeService.class);

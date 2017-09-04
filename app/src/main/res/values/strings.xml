@@ -1,7 +1,13 @@
 <resources>
     <string name="app_name">Cookbook</string>
-    <string name="title_activity_login">Sign in</string>
 
+    <string name="qb_app_id">61942</string>
+    <string name="qb_auth_key">xnT38YbtjbE9MEU</string>
+    <string name="qb_auth_secret">negkGQDRpRwaFFY</string>
+    <string name="qb_account_key">-WtRMMxZ3Xyt36_V9kx-</string>
+
+    
+    <string name="title_activity_login">Sign in</string>
     <!-- Strings related to loginEmail -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>

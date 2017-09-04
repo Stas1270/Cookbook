@@ -19,6 +19,7 @@ import com.ls.cookbook.BaseActivity;
 import com.ls.cookbook.R;
 import com.ls.cookbook.adapter.DrawerAdapter;
 import com.ls.cookbook.interfaces.OnListItemClickListener;
+import com.ls.cookbook.util.UserHelper;
 import com.ls.cookbook.view.fragment.HomeFragment;
 
 import java.util.ArrayList;
@@ -144,6 +145,7 @@ public class MainActivity extends BaseActivity implements OnListItemClickListene
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 FirebaseAuth.getInstance().signOut();
+                                UserHelper.getInstance().clearData();
                                 startActivity(LoginActivity.getLoginActivityInstance(MainActivity.this));
                             }
                         });

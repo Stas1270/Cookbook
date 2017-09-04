@@ -24,18 +24,21 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
-import com.ls.cookbook.data.Task;
+import com.ls.cookbook.data.model.Recipe;
 import com.ls.cookbook.data.source.DataSource;
 import com.ls.cookbook.util.schedulers.BaseSchedulerProvider;
-import com.squareup.sqlbrite.BriteDatabase;
-import com.squareup.sqlbrite.SqlBrite;
 
 import java.util.List;
-import com.ls.cookbook.data.source.local.LocalPersistenceContract.RecipeEntry;
-import rx.Observable;
-import rx.functions.Func1;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.ls.cookbook.data.source.local.LocalPersistenceContract.RecipeEntry;
+import com.squareup.sqlbrite2.BriteDatabase;
+import com.squareup.sqlbrite2.SqlBrite;
+
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.functions.Function;
+
 
 
 /**
@@ -50,26 +53,24 @@ public class LocalDataSource implements DataSource {
     private final BriteDatabase mDatabaseHelper;
 
     @NonNull
-    private Func1<Cursor, Task> mTaskMapperFunction;
+    private Function<Cursor, Recipe> mTaskMapperFunction;
 
     // Prevent direct instantiation.
     private LocalDataSource(@NonNull Context context,
                             @NonNull BaseSchedulerProvider schedulerProvider) {
-        checkNotNull(context, "context cannot be null");
-        checkNotNull(schedulerProvider, "scheduleProvider cannot be null");
         LocalDbHelper dbHelper = new LocalDbHelper(context);
-        SqlBrite sqlBrite = SqlBrite.create();
+        SqlBrite sqlBrite = new SqlBrite.Builder().build();
         mDatabaseHelper = sqlBrite.wrapDatabaseHelper(dbHelper, schedulerProvider.io());
         mTaskMapperFunction = this::getTask;
     }
 
     @NonNull
-    private Task getTask(@NonNull Cursor c) {
+    private Recipe getTask(@NonNull Cursor c) {
         String itemId = c.getString(c.getColumnIndexOrThrow(RecipeEntry.COLUMN_NAME_ENTRY_ID));
         String title = c.getString(c.getColumnIndexOrThrow(RecipeEntry.COLUMN_NAME_TITLE));
         String description =
                 c.getString(c.getColumnIndexOrThrow(RecipeEntry.COLUMN_NAME_DESCRIPTION));
-        return new Task(title, description, itemId);
+        return new Recipe(itemId, title, description);
     }
 
     public static LocalDataSource getInstance(
@@ -86,7 +87,41 @@ public class LocalDataSource implements DataSource {
     }
 
     @Override
-    public Observable<List<Task>> getTasks() {
+    public Maybe<Recipe> getRecipe(@NonNull String recipeId) {
+        String[] projection = {
+                RecipeEntry.COLUMN_NAME_ENTRY_ID,
+                RecipeEntry.COLUMN_NAME_TITLE,
+                RecipeEntry.COLUMN_NAME_DESCRIPTION
+        };
+        String sql = String.format("SELECT %s FROM %s WHERE %s LIKE ?",
+                TextUtils.join(",", projection), RecipeEntry.TABLE_NAME, RecipeEntry.COLUMN_NAME_ENTRY_ID);
+        return mDatabaseHelper.createQuery(RecipeEntry.TABLE_NAME, sql, recipeId)
+                .mapToOneOrDefault(mTaskMapperFunction, null).firstElement();
+    }
+
+    @Override
+    public void saveRecipe(@NonNull Recipe recipe) {
+        ContentValues values = new ContentValues();
+        values.put(RecipeEntry.COLUMN_NAME_ENTRY_ID, recipe.getId());
+        values.put(RecipeEntry.COLUMN_NAME_TITLE, recipe.getName());
+        values.put(RecipeEntry.COLUMN_NAME_DESCRIPTION, recipe.getDescription());
+        mDatabaseHelper.insert(RecipeEntry.TABLE_NAME, values, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    @Override
+    public void deleteRecipe(@NonNull String id) {
+        String selection = RecipeEntry.COLUMN_NAME_ENTRY_ID + " LIKE ?";
+        String[] selectionArgs = {id};
+        mDatabaseHelper.delete(RecipeEntry.TABLE_NAME, selection, selectionArgs);
+    }
+
+    @Override
+    public void refreshRecipeList() {
+
+    }
+
+    @Override
+    public Observable<List<Recipe>> getRecipeList() {
         String[] projection = {
                 RecipeEntry.COLUMN_NAME_ENTRY_ID,
                 RecipeEntry.COLUMN_NAME_TITLE,
@@ -95,78 +130,5 @@ public class LocalDataSource implements DataSource {
         String sql = String.format("SELECT %s FROM %s", TextUtils.join(",", projection), RecipeEntry.TABLE_NAME);
         return mDatabaseHelper.createQuery(RecipeEntry.TABLE_NAME, sql)
                 .mapToList(mTaskMapperFunction);
-    }
-
-    @Override
-    public Observable<Task> getTask(@NonNull String taskId) {
-        String[] projection = {
-                RecipeEntry.COLUMN_NAME_ENTRY_ID,
-                RecipeEntry.COLUMN_NAME_TITLE,
-                RecipeEntry.COLUMN_NAME_DESCRIPTION
-        };
-        String sql = String.format("SELECT %s FROM %s WHERE %s LIKE ?",
-                TextUtils.join(",", projection), RecipeEntry.TABLE_NAME, RecipeEntry.COLUMN_NAME_ENTRY_ID);
-        return mDatabaseHelper.createQuery(RecipeEntry.TABLE_NAME, sql, taskId)
-                .mapToOneOrDefault(mTaskMapperFunction, null);
-    }
-
-    @Override
-    public void saveTask(@NonNull Task task) {
-        checkNotNull(task);
-        ContentValues values = new ContentValues();
-        values.put(RecipeEntry.COLUMN_NAME_ENTRY_ID, task.getId());
-        values.put(RecipeEntry.COLUMN_NAME_TITLE, task.getTitle());
-        values.put(RecipeEntry.COLUMN_NAME_DESCRIPTION, task.getDescription());
-        mDatabaseHelper.insert(RecipeEntry.TABLE_NAME, values, SQLiteDatabase.CONFLICT_REPLACE);
-    }
-
-    @Override
-    public void completeTask(@NonNull Task task) {
-        completeTask(task.getId());
-    }
-
-    @Override
-    public void completeTask(@NonNull String taskId) {
-        ContentValues values = new ContentValues();
-
-        String selection = RecipeEntry.COLUMN_NAME_ENTRY_ID + " LIKE ?";
-        String[] selectionArgs = {taskId};
-        mDatabaseHelper.update(RecipeEntry.TABLE_NAME, values, selection, selectionArgs);
-    }
-
-    @Override
-    public void activateTask(@NonNull Task task) {
-        activateTask(task.getId());
-    }
-
-    @Override
-    public void activateTask(@NonNull String taskId) {
-        ContentValues values = new ContentValues();
-
-        String selection = RecipeEntry.COLUMN_NAME_ENTRY_ID + " LIKE ?";
-        String[] selectionArgs = {taskId};
-        mDatabaseHelper.update(RecipeEntry.TABLE_NAME, values, selection, selectionArgs);
-    }
-
-    @Override
-    public void clearCompletedTasks() {
-    }
-
-    @Override
-    public void refreshTasks() {
-        // Not required because the {@link Repository} handles the logic of refreshing the
-        // tasks from all the available data sources.
-    }
-
-    @Override
-    public void deleteAllTasks() {
-        mDatabaseHelper.delete(RecipeEntry.TABLE_NAME, null);
-    }
-
-    @Override
-    public void deleteTask(@NonNull String taskId) {
-        String selection = RecipeEntry.COLUMN_NAME_ENTRY_ID + " LIKE ?";
-        String[] selectionArgs = {taskId};
-        mDatabaseHelper.delete(RecipeEntry.TABLE_NAME, selection, selectionArgs);
     }
 }

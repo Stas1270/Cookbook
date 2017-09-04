@@ -36,7 +36,7 @@ public class LocalDbHelper extends SQLiteOpenHelper {
                     LocalPersistenceContract.RecipeEntry._ID + TEXT_TYPE + " PRIMARY KEY," +
                     LocalPersistenceContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + TEXT_TYPE + COMMA_SEP +
                     LocalPersistenceContract.RecipeEntry.COLUMN_NAME_TITLE + TEXT_TYPE + COMMA_SEP +
-                    LocalPersistenceContract.RecipeEntry.COLUMN_NAME_DESCRIPTION + TEXT_TYPE + COMMA_SEP +
+                    LocalPersistenceContract.RecipeEntry.COLUMN_NAME_DESCRIPTION + TEXT_TYPE +
             " )";
 
     public LocalDbHelper(Context context) {

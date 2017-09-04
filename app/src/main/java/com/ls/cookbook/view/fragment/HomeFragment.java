@@ -39,7 +39,6 @@ public class HomeFragment extends BaseFragment implements OnListItemClickListene
         return new HomeFragment();
     }
 
-
     @Override
     protected int contentViewId() {
         return R.layout.fragment_home;
@@ -56,7 +55,6 @@ public class HomeFragment extends BaseFragment implements OnListItemClickListene
         homePresenter = new HomePresenter(Injection.provideTasksRepository(getApplicationContext()),
                 this,
                 Injection.provideSchedulerProvider());
-        homePresenter.start();
     }
 
     private void initAdapter() {
@@ -65,8 +63,49 @@ public class HomeFragment extends BaseFragment implements OnListItemClickListene
         recyclerView.setAdapter(recipeListAdapter);
     }
 
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        dismissProgressDialog();
+        homePresenter.subscribe();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        homePresenter.unsubscribe();
+    }
+
     @Override
     public void onItemClick(int position, Recipe recipe) {
 
+    }
+
+    @Override
+    public void setLoadingIndicator(boolean b) {
+        if (b){
+            showProgressDialog();
+        } else{
+            dismissProgressDialog();
+        }
+    }
+
+    @Override
+    public void showLoadingError() {
+        dismissProgressDialog();
+        showMessageOK("Error", null);
+    }
+
+    @Override
+    public void showNoRecipes() {
+        dismissProgressDialog();
+        showMessageOK("Recipe list is empty", null);
+    }
+
+    @Override
+    public void showRecipeList(List<Recipe> recipeList) {
+        dismissProgressDialog();
+        recipeListAdapter.setData(recipeList);
     }
 }
