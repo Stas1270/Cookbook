@@ -4,12 +4,11 @@ import android.support.annotation.NonNull;
 
 import com.ls.cookbook.contract.HomeContract;
 import com.ls.cookbook.data.model.Recipe;
-import com.ls.cookbook.data.source.Repository;
+import com.ls.cookbook.data.source.DataRepository;
 import com.ls.cookbook.util.schedulers.BaseSchedulerProvider;
 
 import java.util.List;
 
-import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.disposables.ListCompositeDisposable;
 
@@ -20,7 +19,7 @@ import io.reactivex.internal.disposables.ListCompositeDisposable;
 
 public class HomePresenter implements HomeContract.Presenter {
     @NonNull
-    private Repository repository;
+    private DataRepository dataRepository;
 
     @NonNull
     private BaseSchedulerProvider baseSchedulerProvider;
@@ -33,8 +32,8 @@ public class HomePresenter implements HomeContract.Presenter {
 
     private boolean mFirstLoad = true;
 
-    public HomePresenter(@NonNull Repository repository, @NonNull HomeContract.View homeView, @NonNull BaseSchedulerProvider baseSchedulerProvider) {
-        this.repository = repository;
+    public HomePresenter(@NonNull DataRepository dataRepository, @NonNull HomeContract.View homeView, @NonNull BaseSchedulerProvider baseSchedulerProvider) {
+        this.dataRepository = dataRepository;
         this.homeView = homeView;
         this.baseSchedulerProvider = baseSchedulerProvider;
         disposableContainer = new ListCompositeDisposable();
@@ -49,7 +48,7 @@ public class HomePresenter implements HomeContract.Presenter {
 
     @Override
     public void addRecipe(Recipe recipe) {
-        repository.saveRecipe(recipe)
+        dataRepository.saveRecipe(recipe)
                 .subscribe(next -> getRecipeList(false));
     }
 
@@ -58,9 +57,9 @@ public class HomePresenter implements HomeContract.Presenter {
             homeView.setLoadingIndicator(true);
         }
         if (forceUpdate) {
-            repository.refreshRecipeList();
+            dataRepository.refreshRecipeList();
         }
-        Disposable disposable = repository
+        Disposable disposable = dataRepository
                 .getRecipeList()
                 .subscribeOn(baseSchedulerProvider.computation())
                 .observeOn(baseSchedulerProvider.ui())

@@ -7,7 +7,7 @@
     android:background="@color/colorPrimary"
     android:minHeight="?attr/actionBarSize"
     style="@style/ToolBarStyle"
-    tools:title="@string/app_name"
+    android:title="@string/app_name"
     android:theme="@style/ToolBarStyle">
 
     <!--<LinearLayout
