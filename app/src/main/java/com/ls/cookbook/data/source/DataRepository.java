@@ -36,7 +36,7 @@ public class DataRepository implements DataSource {
      */
     @VisibleForTesting
     @Nullable
-    Map<Long, Recipe> mCachedTasks;
+    Map<String, Recipe> mCachedTasks;
 
     /**
      * Marks the cache as invalid, to force an update the next time data is requested. This variable
@@ -215,7 +215,7 @@ public class DataRepository implements DataSource {
     Maybe<Recipe> getRecipeWithIdFromLocalRepository(@NonNull final String recipe) {
         return mTasksLocalDataSource
                 .getRecipe(recipe)
-                .doOnSuccess(task -> mCachedTasks.put(Long.getLong(recipe), task));
+                .doOnSuccess(task -> mCachedTasks.put(recipe, task));
     }
 
 }

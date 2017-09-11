@@ -15,7 +15,8 @@ public class UserHelper {
 
     private static final String SHARED_PREFERENCES_NAME = "cookbook";
     //Keys
-    private static final String USER_TOKEN = "userToken";
+    private static final String FB_TOKEN = "userToken";
+    private static final String QB_TOKEN = "userToken";
 
     private SharedPreferences sharedPreferences;
     private Gson gson;
@@ -35,19 +36,30 @@ public class UserHelper {
         return instance;
     }
 
-    public void setToken(String token) {
+    public void setQBToken(String token) {
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(USER_TOKEN, token);
+        editor.putString(QB_TOKEN, token);
         editor.apply();
     }
 
-    public String getToken(){
-        return sharedPreferences.getString(USER_TOKEN,"");
+    public String getQBToken(){
+        return sharedPreferences.getString(QB_TOKEN,"");
+    }
+
+    public void setFBToken(String token) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(FB_TOKEN, token);
+        editor.apply();
+    }
+
+    public String getFBToken(){
+        return sharedPreferences.getString(FB_TOKEN,"");
     }
 
     public void clearData() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.remove(USER_TOKEN);
+        editor.remove(QB_TOKEN);
+        editor.remove(FB_TOKEN);
         editor.apply();
     }
 

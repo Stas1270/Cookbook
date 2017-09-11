@@ -5,6 +5,7 @@ import com.ls.cookbook.data.model.Recipe;
 import java.util.List;
 
 import io.reactivex.Observable;
+import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
@@ -24,11 +25,11 @@ public interface RecipeService {
 
 
     @GET("recipe.json")
-    Observable<List<Recipe>> getRecipeList(@Query("auth") String auth);
+    Observable<ResponseModel<List<Recipe>>> getRecipeList(@Header("QB-Token") String token);
 
     @POST("recipe.json")
     @FormUrlEncoded
     Observable<Void> putRecipe(@Query("auth") String auth,
-                               @Field("name")String name);
+                               @Field("name") String name);
 
 }

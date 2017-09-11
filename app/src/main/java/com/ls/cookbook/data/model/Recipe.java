@@ -1,14 +1,25 @@
 package com.ls.cookbook.data.model;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by LS on 03.09.2017.
  */
 
 public class Recipe {
 
-    private long id;
+    @SerializedName("_id")
+    private String id;
+
     private String name;
+
     private String description;
+
+    @SerializedName("user_id")
+    private long userId;
+
+    @SerializedName("created_at")
+    private long createdAt;
 
     public Recipe(String title, String description) {
         name = title;
@@ -34,18 +45,36 @@ public class Recipe {
         this.description = description;
     }
 
-    public long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public Recipe(long id, String name, String description) {
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Recipe(String id, String name, String description) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.createdAt = System.currentTimeMillis();
+
     }
 
     @Override

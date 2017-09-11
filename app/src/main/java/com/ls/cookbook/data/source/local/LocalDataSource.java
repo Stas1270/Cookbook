@@ -49,7 +49,7 @@ public class LocalDataSource implements DataSource {
 
     @NonNull
     private Recipe getTask(@NonNull Cursor c) {
-        long itemId = c.getLong(c.getColumnIndexOrThrow(RecipeEntry._ID));
+        String itemId = c.getString(c.getColumnIndexOrThrow(RecipeEntry._ID));
         String title = c.getString(c.getColumnIndexOrThrow(RecipeEntry.COLUMN_NAME_TITLE));
         String description =
                 c.getString(c.getColumnIndexOrThrow(RecipeEntry.COLUMN_NAME_DESCRIPTION));

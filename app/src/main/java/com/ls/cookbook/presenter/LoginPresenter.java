@@ -53,7 +53,7 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
     }
 
     private void trySignIn(boolean withUpdateToken) {
-        String prefToken = UserHelper.getInstance().getToken();
+        String prefToken = UserHelper.getInstance().getFBToken();
         Logger.e("FB TOKEN: " + prefToken);
         if (!withUpdateToken && !TextUtils.isEmpty(prefToken)) {
             loginView.onLoginSuccessful();
@@ -64,7 +64,7 @@ public class LoginPresenter implements LoginContract.Presenter, GoogleApiClient.
                         .addOnCompleteListener(task -> {
                             String token = task.getResult().getToken();
                             Logger.e("FB TOKEN: " + token);
-                            UserHelper.getInstance().setToken(token);
+                            UserHelper.getInstance().setFBToken(token);
                             loginView.onLoginSuccessful();
                         })
                         .addOnFailureListener(e -> loginView.onLoginFailure(e.getLocalizedMessage()));

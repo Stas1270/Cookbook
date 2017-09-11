@@ -123,6 +123,6 @@ public class HomeFragment extends BaseFragment implements OnListItemClickListene
     @OnClick(R.id.fab_add_recipe)
     void onClickAddRecipe() {
         long millis = System.currentTimeMillis();
-        homePresenter.addRecipe(new Recipe(millis, "name" + millis, "descr" + millis));
+        homePresenter.addRecipe(new Recipe(String.valueOf(millis), "name" + millis, "descr" + millis));
     }
 }

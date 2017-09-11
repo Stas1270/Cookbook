@@ -34,7 +34,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RESTClient {
 
-    private static final String BASE_URL = "https://cookbook1270.firebaseio.com/";
+//    private static final String BASE_URL = "https://cookbook1270.firebaseio.com/";
+    private static final String BASE_URL = "https://api.quickblox.com/data/";
 
     private static RESTClient ourInstance = new RESTClient();
     private final Retrofit retrofit;
@@ -117,7 +118,7 @@ public class RESTClient {
         @Override
         public okhttp3.Response intercept(Chain chain) throws IOException {
             Request request = chain.request();
-            Logger.e("BaseRESTClient", "url: " + request.url() + " " + request.method() + " auth: " + !TextUtils.isEmpty(request.header("auth")) + " body: " + bodyToString(request));
+            Logger.e("BaseRESTClient", "url: " + request.url() + " " + request.method() + " QB-Token: " + !TextUtils.isEmpty(request.header("QB-Token")) + " body: " + bodyToString(request));
             okhttp3.Response response = chain.proceed(request);
             String bodyString = response.body().string();
             Logger.e("BaseRESTClient", "url: " + request.url() + " code: " + String.valueOf(response.code()) + "; response: " + bodyString);

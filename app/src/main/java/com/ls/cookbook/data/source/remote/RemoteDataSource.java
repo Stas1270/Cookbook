@@ -6,6 +6,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.ls.cookbook.data.model.Recipe;
 import com.ls.cookbook.data.source.DataSource;
+import com.ls.cookbook.network.RESTClient;
+import com.ls.cookbook.network.ResponseModel;
+import com.ls.cookbook.util.UserHelper;
 
 import java.util.List;
 
@@ -13,6 +16,9 @@ import durdinapps.rxfirebase2.DataSnapshotMapper;
 import durdinapps.rxfirebase2.RxFirebaseDatabase;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Implementation of the data source that adds a latency simulating network.
@@ -45,9 +51,24 @@ public class RemoteDataSource implements DataSource {
 
     @Override
     public Observable<List<Recipe>> getRecipeList() {
-        return RxFirebaseDatabase
-                .observeSingleValueEvent(getRecipeRef().orderByValue(), DataSnapshotMapper.listOf(Recipe.class))
-                .toObservable();
+        return RESTClient.getInstance().getRecipeService()
+                .getRecipeList(UserHelper.getInstance().getQBToken())
+                .map(ResponseModel::getItems);
+//                .enqueue(new Callback<ResponseModel<List<Recipe>>>() {
+//            @Override
+//            public void onResponse(Call<ResponseModel<List<Recipe>>> call, Response<ResponseModel<List<Recipe>>> response) {
+//
+//            }
+//
+//            @Override
+//            public void onFailure(Call<ResponseModel<List<Recipe>>> call, Throwable t) {
+//
+//            }
+//        });
+//        return Observable.empty();
+//        return RxFirebaseDatabase
+//                .observeSingleValueEvent(getRecipeRef().orderByValue(), DataSnapshotMapper.listOf(Recipe.class))
+//                .toObservable();
     }
 
     private DatabaseReference getRecipeRef() {
