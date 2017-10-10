@@ -35,6 +35,8 @@ public abstract class BaseFragment extends Fragment {
             setDataToFragmentViews();
         }
         return view;
+
+
     }
 
     @Nullable
